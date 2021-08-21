@@ -1,14 +1,17 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:path/path.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
-const String uploadURL = "https://vajdafest.ddns.net:5001/profile/upload";
+const String uploadImageURL = "https://vajdafest.ddns.net:5001/profile/upload-image";
+const String uploadVideoURL = "https://vajdafest.ddns.net:5001/profile/upload-video";
 
 void main() => runApp(MyApp());
 
@@ -34,13 +37,38 @@ class ImageCapture extends StatefulWidget {
 class _ImageCaptureState extends State<ImageCapture> {
   final ImagePicker _imagePicker = ImagePicker();
   File? _imageFile;
+  File? _videoFile;
+  Uint8List? _videoThumbnail;
 
   Future<void> _pickImage(ImageSource source) async {
-    File selected = File((await _imagePicker.pickImage(source: source))!.path);
+    var pickedImage = await _imagePicker.pickVideo(source: source);
+    if (pickedImage == null) return;
+
+    File selected = File(pickedImage.path);
 
     setState(() {
       _imageFile = selected;
     });
+  }
+
+  Future<void> _pickVideo(ImageSource source) async {
+    var pickedVideo = await _imagePicker.pickVideo(source: source);
+    if (pickedVideo == null) return;
+
+    File selected = File(pickedVideo.path);
+
+    var thumbnail = await VideoThumbnail.thumbnailData(
+      video: selected.path,
+      imageFormat: ImageFormat.JPEG,
+      maxWidth: 128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
+      quality: 90,
+    );
+
+      setState(() {
+        _videoFile = selected;
+        _videoThumbnail = thumbnail;
+      });
+
   }
 
   Future<void> _cropImage() async {
@@ -59,6 +87,8 @@ class _ImageCaptureState extends State<ImageCapture> {
   void _clear() {
     setState(() {
       _imageFile = null;
+      _videoFile = null;
+      _videoThumbnail = null;
     });
   }
 
@@ -75,6 +105,14 @@ class _ImageCaptureState extends State<ImageCapture> {
             IconButton(
                 icon: Icon(Icons.photo_library),
                 onPressed: () => _pickImage(ImageSource.gallery)
+            ),
+            IconButton(
+                icon: Icon(Icons.video_camera_back),
+                onPressed: () => _pickVideo(ImageSource.camera)
+            ),
+            IconButton(
+                icon: Icon(Icons.video_library),
+                onPressed: () => _pickVideo(ImageSource.gallery)
             ),
           ],
         ),
@@ -96,8 +134,20 @@ class _ImageCaptureState extends State<ImageCapture> {
               ],
             ),
 
-            UploadScreen(file: _imageFile!),
-          ]
+            UploadScreen(file: _imageFile!, type: MediaType.Image,),
+
+          ] else if (_videoFile != null) ...[
+
+            if (_videoThumbnail != null)
+                Image.memory(_videoThumbnail!),
+
+            TextButton(
+                child: Icon(Icons.refresh),
+                onPressed: _clear),
+
+            UploadScreen(file: _videoFile!, type: MediaType.Video,),
+
+          ],
         ],
       ),
     );
@@ -136,8 +186,9 @@ enum MediaType { Image, Video }
 
 class UploadScreen extends StatefulWidget {
   final File file;
+  final MediaType type;
 
-  UploadScreen({Key? key, required this.file}) : super(key: key);
+  UploadScreen({Key? key, required this.file, required this.type}) : super(key: key);
 
   @override
   _UploadScreenState createState() => _UploadScreenState();
@@ -162,7 +213,7 @@ class _UploadScreenState extends State<UploadScreen> {
     _resultSubscription = uploader.result.listen((result) {
       print(
           "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}, tag: ${result.tag}, headers: ${result.headers}");
-      log("status: " + result.status.toString());
+      // log("status: " + result.status.toString());
       setState(() {
         uploadItem = null;
         progressPercent = 0;
@@ -214,20 +265,22 @@ class _UploadScreenState extends State<UploadScreen> {
       fieldname: "file",
     );
 
+    int randomNumber = Random().nextInt(9999) + 1000;
+
     var taskId = await uploader.enqueueBinary(
-      url: uploadURL,
+      url: widget.type == MediaType.Image ?  uploadImageURL : uploadVideoURL,
       file: fileItem,
       method: UploadMethod.POST,
       tag: tag,
       showNotification: true,
-      headers: {"className": "11.B", "taskId": "5546"},
+      headers: {"className": "11.B", "taskId": randomNumber.toString(), "Authorization" : "Basic YWJjOjEyMw==", "extension" : extension(widget.file.path)},
     );
 
     setState(() {
         uploadItem = UploadItem(
           id: taskId,
           tag: tag,
-          type: MediaType.Image,
+          type: widget.type,
           status: UploadTaskStatus.enqueued,
         );
     });
