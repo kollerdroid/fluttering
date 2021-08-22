@@ -10,6 +10,7 @@ import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 const String uploadImageURL = "https://vajdafest.ddns.net:5001/media/upload-image";
 const String uploadVideoURL = "https://vajdafest.ddns.net:5001/media/upload-video";
@@ -267,6 +268,15 @@ class _UploadScreenState extends State<UploadScreen> {
     );
 
     developer.log("upload: " + widget.file.path);
+    Fluttertoast.showToast(
+        msg: widget.file.path,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black,
+        textColor: Colors.white,
+        fontSize: 12.0
+    );
     int randomNumber = Random().nextInt(9999) + 1000;
 
     var taskId = await uploader.enqueueBinary(

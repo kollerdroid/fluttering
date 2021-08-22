@@ -31,6 +31,7 @@ dependencies:
   image_cropper: ^1.4.1
   flutter_uploader: ^1.2.1
   video_thumbnail: ^0.4.3
+  fluttertoast: ^8.0.8
 
 dev_dependencies:
   flutter:
