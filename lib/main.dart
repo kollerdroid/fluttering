@@ -10,8 +10,8 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-const String uploadImageURL = "https://vajdafest.ddns.net:5001/profile/upload-image";
-const String uploadVideoURL = "https://vajdafest.ddns.net:5001/profile/upload-video";
+const String uploadImageURL = "https://vajdafest.ddns.net:5001/media/upload-image";
+const String uploadVideoURL = "https://vajdafest.ddns.net:5001/media/upload-video";
 
 void main() => runApp(MyApp());
 
