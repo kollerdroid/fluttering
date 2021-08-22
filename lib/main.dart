@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -265,6 +266,7 @@ class _UploadScreenState extends State<UploadScreen> {
       fieldname: "file",
     );
 
+    developer.log("upload: " + widget.file.path);
     int randomNumber = Random().nextInt(9999) + 1000;
 
     var taskId = await uploader.enqueueBinary(
