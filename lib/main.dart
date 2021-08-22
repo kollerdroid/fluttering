@@ -41,7 +41,7 @@ class _ImageCaptureState extends State<ImageCapture> {
   Uint8List? _videoThumbnail;
 
   Future<void> _pickImage(ImageSource source) async {
-    var pickedImage = await _imagePicker.pickVideo(source: source);
+    var pickedImage = await _imagePicker.pickImage(source: source);
     if (pickedImage == null) return;
 
     File selected = File(pickedImage.path);
